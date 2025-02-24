@@ -1,3 +1,6 @@
+#ifndef BOARD_HPP
+#define BOARD_HPP
+
 #include <set>
 #include <map>
 #include <vector>
@@ -10,17 +13,43 @@ struct BoardCell
     bool isGoal;
     bool isLighted;
     bool isVisited;
+
+    BoardCell(){
+        this->height = 0;
+        this->isGoal = false;
+        this->isLighted = false;
+        this->isVisited = false;
+    }
+    BoardCell(int h, bool g, bool l, bool v) : height(h), isGoal(g), isLighted(l), isVisited(v) {}
+    ~BoardCell(){}
 };
 
 struct Board{
     int n_lines;
     int n_columns;
-    vector<std::vector<BoardCell>> cells;
-    set<std::pair<int, int>> visited;
-    map<std::pair<int, int>, bool> lighted;
+    vector<vector<BoardCell>> cells;
+    set<pair<int, int>> visited;
+    map<pair<int, int>, bool> lighted;
+
+    Board();
+    ~Board();
+    void setBoard(vector<vector<BoardCell>> board);
 };
 
+Board::Board(){
+    this->n_lines = 0;
+    this->n_columns = 0;
+}
 
+Board::~Board(){}
+
+void Board::setBoard(vector<vector<BoardCell>> board){
+    this->cells = board;
+    this->n_lines = board.size();
+    this->n_columns = board[0].size();
+}
+
+#endif
 /*
 
 class Board
