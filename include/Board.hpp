@@ -7,7 +7,7 @@
 
 using namespace std;
 
-struct BoardCell
+typedef struct BoardCell
 {
     int height;
     bool isGoal;
@@ -22,9 +22,9 @@ struct BoardCell
     }
     BoardCell(int h, bool g, bool l, bool v) : height(h), isGoal(g), isLighted(l), isVisited(v) {}
     ~BoardCell(){}
-};
+}BoardCell;
 
-struct Board{
+typedef struct Board{
     int n_lines;
     int n_columns;
     vector<vector<BoardCell>> cells;
@@ -34,7 +34,7 @@ struct Board{
     Board();
     ~Board();
     void setBoard(vector<vector<BoardCell>> board);
-};
+}Board;
 
 Board::Board(){
     this->n_lines = 0;
@@ -49,7 +49,7 @@ void Board::setBoard(vector<vector<BoardCell>> board){
     this->n_columns = board[0].size();
 }
 
-#endif
+#endif // BOARD_HPP
 /*
 
 class Board
