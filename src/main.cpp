@@ -67,6 +67,8 @@ int main() {
         }
         cout << endl;
     }
+
+    delete board;
     
     return 0;  
 }

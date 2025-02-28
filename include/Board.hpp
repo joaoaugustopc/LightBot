@@ -29,11 +29,12 @@ typedef struct Board{
     int n_columns;
     vector<vector<BoardCell>> cells;
     set<pair<int, int>> visited;
-    map<pair<int, int>, bool> lighted;
+    vector<pair<int, int>> goals;
 
     Board();
     ~Board();
     void setBoard(vector<vector<BoardCell>> board);
+    int getGoalIndex(int line, int column);
 }Board;
 
 Board::Board(){
@@ -47,31 +48,24 @@ void Board::setBoard(vector<vector<BoardCell>> board){
     this->cells = board;
     this->n_lines = board.size();
     this->n_columns = board[0].size();
+
+    for(int i = 0; i < this->n_lines; i++){
+        for(int j = 0; j < this->n_columns; j++){
+            if(board[i][j].isGoal){
+                this->goals.push_back(make_pair(i, j));
+            }
+        }
+    }
+}
+
+int Board::getGoalIndex(int line, int column){
+    for(int i = 0; i < this->goals.size(); i++){
+        if(this->goals[i].first == line && this->goals[i].second == column){
+            return i;
+        }
+    }
+    return -1;
 }
 
 #endif // BOARD_HPP
-/*
-
-class Board
-{ 
-    public:
-        Board(std::vector<std::vector<BoardCell>> board, int n_targetCell);
-        ~Board();
-        bool isLighted(int x, int y);
-        bool isGoal(int x, int y);
-        bool isOnBoard(int x, int y);
-        bool isVisited(int x, int y);
-        void setVisited(int x, int y);
-        void setLighted(int x, int y);
-        bool isSolved();
-        bool getHeigth(int x, int y);
-        bool getNTargetCellLighted();
-        bool getNTargetCell();
-
-    private:
-        std::vector<std::vector<BoardCell>> board;
-        std::set<std::pair<int, int>> visited;
-        int n_targetCellLighted;
-};
-*/
     
