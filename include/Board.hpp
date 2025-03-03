@@ -17,8 +17,6 @@ typedef struct BoardCell
     BoardCell(){
         this->height = 0;
         this->isGoal = false;
-        this->isLighted = false;
-        this->isVisited = false;
     }
     BoardCell(int h, bool g, bool l, bool v) : height(h), isGoal(g), isLighted(l), isVisited(v) {}
     ~BoardCell(){}
@@ -28,13 +26,15 @@ typedef struct Board{
     int n_lines;
     int n_columns;
     vector<vector<BoardCell>> cells;
-    set<pair<int, int>> visited;
     vector<pair<int, int>> goals;
 
     Board();
     ~Board();
     void setBoard(vector<vector<BoardCell>> board);
-    int getGoalIndex(int line, int column);
+    int getGoalIndex(int line, int column) const;
+    int getAltura(int line, int column) const;
+    bool posValida(int linhaOrigem, int colunaOrigem, int linhaDestino, int colunaDestino) const;
+
 }Board;
 
 Board::Board(){
@@ -58,13 +58,31 @@ void Board::setBoard(vector<vector<BoardCell>> board){
     }
 }
 
-int Board::getGoalIndex(int line, int column){
+int Board::getGoalIndex(int line, int column) const{
     for(int i = 0; i < this->goals.size(); i++){
         if(this->goals[i].first == line && this->goals[i].second == column){
             return i;
         }
     }
     return -1;
+}
+
+int Board::getAltura(int line, int column) const{
+    return this->cells[line][column].height;
+}
+
+bool Board::posValida(int linhaOrigem, int colunaOrigem, int linhaDestino, int colunaDestino) const{
+    if(linhaDestino < 0 || linhaDestino >= this->n_lines || colunaDestino < 0 || colunaDestino >= this->n_columns){
+        return false;
+    }
+
+    int alturaOrigem = this->getAltura(linhaOrigem, colunaOrigem);
+    int alturaDestino = this->getAltura(linhaDestino, colunaDestino);
+
+    if (abs(alturaOrigem - alturaDestino) > 1){
+        return false;
+    }
+    return true;
 }
 
 #endif // BOARD_HPP
