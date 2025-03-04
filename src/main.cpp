@@ -93,7 +93,7 @@ vector<vector<BoardCell>> level2 = {
     {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
     {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
     {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(1, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(2, 1), BoardCell(2, 0), BoardCell(2, 0), BoardCell(4, 0), BoardCell(2, 0), BoardCell(3, 0), BoardCell(2, 0), BoardCell(0, 0)},
+    {BoardCell(2, 1), BoardCell(2, 0), BoardCell(2, 0), BoardCell(3, 0), BoardCell(2, 0), BoardCell(3, 0), BoardCell(2, 0), BoardCell(0, 0)},
     {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(4, 0), BoardCell(3, 0), BoardCell(4, 0), BoardCell(2, 0), BoardCell(2, 1)},
     {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
     {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)}};
