@@ -11,14 +11,12 @@ typedef struct BoardCell
 {
     int height;
     bool isGoal;
-    bool isLighted;
-    bool isVisited;
 
     BoardCell(){
         this->height = 0;
         this->isGoal = false;
     }
-    BoardCell(int h, bool g, bool l, bool v) : height(h), isGoal(g), isLighted(l), isVisited(v) {}
+    BoardCell(int h, bool g): height(h), isGoal(g) {}
     ~BoardCell(){}
 }BoardCell;
 
