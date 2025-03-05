@@ -1,10 +1,39 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
-#include "./Searches/DFS.cpp"
+#include "./searches.cpp"
+
+//{height, isGoal, isLighted, isVisited}
+vector<vector<BoardCell>> level1 = {
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(1, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(2, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(2, 0), BoardCell(2, 0), BoardCell(2, 0), BoardCell(2, 0), BoardCell(2, 0), BoardCell(2, 1)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)}};
+
+vector<vector<BoardCell>> level2 = {
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(1, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(2, 1), BoardCell(2, 0), BoardCell(2, 0), BoardCell(3, 0), BoardCell(2, 0), BoardCell(3, 0), BoardCell(2, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(4, 0), BoardCell(3, 0), BoardCell(4, 0), BoardCell(2, 0), BoardCell(2, 1)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)}};
+
+vector<vector<BoardCell>> level3 = {
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(4, 1), BoardCell(3, 1), BoardCell(2, 1), BoardCell(1, 1), BoardCell(2, 1), BoardCell(3, 1), BoardCell(4, 1), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(3, 1), BoardCell(0, 0), BoardCell(0, 0), BoardCell(2, 1), BoardCell(0, 0), BoardCell(0, 0), BoardCell(3, 1), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(2, 1), BoardCell(0, 0), BoardCell(0, 0), BoardCell(3, 1), BoardCell(0, 0), BoardCell(0, 0), BoardCell(2, 1), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(1, 1), BoardCell(2, 1), BoardCell(3, 1), BoardCell(4, 1), BoardCell(3, 1), BoardCell(2, 1), BoardCell(1, 1), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
+    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)}};
 
 using namespace std;
-
 
 // Função para imprimir o mapa com o caminho solução
 void imprimirMapaComCaminho(int numLinhas, int numColunas,
@@ -79,36 +108,6 @@ void imprimirMapaComCaminho(int numLinhas, int numColunas,
     std::cout << '\n';
 }
 
-//{height, isGoal, isLighted, isVisited}
-vector<vector<BoardCell>> level1 = {
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(1, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(2, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(2, 0), BoardCell(2, 0), BoardCell(2, 0), BoardCell(2, 0), BoardCell(2, 0), BoardCell(2, 1)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)}};
-
-vector<vector<BoardCell>> level2 = {
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(1, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(2, 1), BoardCell(2, 0), BoardCell(2, 0), BoardCell(4, 0), BoardCell(2, 0), BoardCell(3, 0), BoardCell(2, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(4, 0), BoardCell(3, 0), BoardCell(4, 0), BoardCell(2, 0), BoardCell(2, 1)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)}};
-
-vector<vector<BoardCell>> level3 = {
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(4, 1), BoardCell(3, 1), BoardCell(2, 1), BoardCell(1, 1), BoardCell(2, 1), BoardCell(3, 1), BoardCell(4, 1), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(3, 1), BoardCell(0, 0), BoardCell(0, 0), BoardCell(2, 1), BoardCell(0, 0), BoardCell(0, 0), BoardCell(3, 1), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(2, 1), BoardCell(0, 0), BoardCell(0, 0), BoardCell(3, 1), BoardCell(0, 0), BoardCell(0, 0), BoardCell(2, 1), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(1, 1), BoardCell(2, 1), BoardCell(3, 1), BoardCell(4, 1), BoardCell(3, 1), BoardCell(2, 1), BoardCell(1, 1), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)},
-    {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)}};
-
 int main()
 {
 
@@ -169,7 +168,7 @@ int main()
     No *noInicial = new No(estadoInicial, nullptr, UP, 0);
     std::set<Estado> visitados;
     std::vector<Operacao> caminho;
-    if (buscaDFS(noInicial, visitados, caminho, *board))
+    if (buscaBFS(noInicial, visitados, caminho, *board))
     {
         // Imprimir mapa com caminho
 
@@ -192,10 +191,9 @@ int main()
         cout << "Caminho não encontrado" << endl;
     }
 
-    cout <<"Total de Movimentos: "<< caminho.size() << endl;
+    cout << "Total de Movimentos: " << caminho.size() << endl;
 
     delete board;
 
     return 0;
-
 }
