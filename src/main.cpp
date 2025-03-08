@@ -1,7 +1,9 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
-#include "./searches.cpp"
+#include <queue>
+#include <algorithm>
+#include "../include/models.hpp"
 
 //{height, isGoal, isLighted, isVisited}
 vector<vector<BoardCell>> level1 = {
@@ -108,6 +110,102 @@ void imprimirMapaComCaminho(int numLinhas, int numColunas,
     std::cout << '\n';
 }
 
+/////////////////////////////////////////// BUSCA EM PROFUNDIDADE ////////////////////////////////////
+bool buscaDFS(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
+    if(estadoObjetivo(noAtual->estado))
+        return true;
+
+    visitados.insert(noAtual->estado);
+
+    std::vector<No*> sucessores = gerarSucessores(noAtual, board);
+    for(No* sucessor : sucessores) {
+        if(visitados.find(sucessor->estado) == visitados.end()) {
+            caminho.push_back(sucessor->op);
+            if(buscaDFS(sucessor, visitados, caminho, board))
+                return true;
+            caminho.pop_back();
+        }
+    }
+    
+    return false;
+}
+//////////////////////////////////////// FIM BUSCA PROFUNDIDADE ////////////////////////////////////////
+vector<Operacao> reconstruirCaminho(No *no)
+{
+    vector<Operacao> caminho;
+    No *noAtual = no;
+
+    while (noAtual->pai != nullptr)
+    {
+        caminho.push_back(noAtual->op);
+        noAtual = noAtual->pai;
+    }
+
+    reverse(caminho.begin(), caminho.end());
+    return caminho;
+}
+
+///////////////////////////////////////////// BUSCA EM LARGURA ////////////////////////////////////////
+bool buscaBFS(No *noInicial, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
+{
+    queue<No *> fila;
+
+    fila.push(noInicial);
+    visitados.insert(noInicial->estado);
+
+    while (!fila.empty())
+    {
+        No *noAtual = fila.front();
+        fila.pop();
+
+        if (estadoObjetivo(noAtual->estado))
+        {
+
+            caminho = reconstruirCaminho(noAtual);
+            return true;
+        }
+
+        vector<No *> sucessores = gerarSucessores(noAtual, board);
+        for (No *sucessor : sucessores)
+        {
+            if (visitados.find(sucessor->estado) == visitados.end())
+            {
+                fila.push(sucessor);
+                visitados.insert(sucessor->estado);
+            }
+        }
+    }
+
+    return false;
+}
+//////////////////////////////////// FIM BUSCA LARGURA ///////////////////////////////////////////////
+
+//////////////////////////////////// BUSCA BACKTRACKING //////////////////////////////////////////////
+bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
+    if (estadoObjetivo(noAtual->estado))
+        return true;
+
+    visitados.insert(noAtual->estado);
+
+    //std::vector<No*> sucessores = gerarSucessores(noAtual, board);
+    std::vector<Operacao> operacoes = listaOperacoes(noAtual, board);
+
+    for (Operacao operacao : operacoes) {
+        No* sucessor = getSucessor(noAtual, operacao, board);
+        if (visitados.find(sucessor->estado) == visitados.end()) {
+            caminho.push_back(operacao);
+            if (buscaBacktracking(sucessor, visitados, caminho, board))
+                return true;
+            caminho.pop_back();
+        }
+    }
+
+    //visitados.erase(noAtual->estado);
+    return false;
+}
+
+
+/////////////////////////////////// FIM BUSCA BACKTRACKING ///////////////////////////////////////////
 int main()
 {
 
@@ -162,13 +260,35 @@ int main()
         cout << endl;
     }
 
-    // Busca DFS
+
+    // Selecionar tipo de busca
+    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking" << endl;
+    int searchType;
+    cin >> searchType;
 
     Estado estadoInicial = Estado(0, 0, vector<bool>(board->goals.size(), false));
     No *noInicial = new No(estadoInicial, nullptr, UP, 0);
     std::set<Estado> visitados;
     std::vector<Operacao> caminho;
-    if (buscaBFS(noInicial, visitados, caminho, *board))
+    bool found = false;
+
+    switch (searchType)
+    {
+    case 1:
+        found = buscaBFS(noInicial, visitados, caminho, *board);
+        break;
+    case 2:
+        found = buscaDFS(noInicial, visitados, caminho, *board);
+        break;
+    case 3:
+        found = buscaBacktracking(noInicial, visitados, caminho, *board);
+        break;
+    default:
+        cout << "Tipo de busca inválido" << endl;
+        return 0;
+    }
+
+    if (found)
     {
         // Imprimir mapa com caminho
 
