@@ -4,6 +4,8 @@
 #include <queue>
 #include <algorithm>
 #include "../include/models.hpp"
+#include <string>
+
 
 //{height, isGoal, isLighted, isVisited}
 vector<vector<BoardCell>> level1 = {
@@ -180,6 +182,47 @@ bool buscaBFS(No *noInicial, set<Estado> &visitados, vector<Operacao> &caminho, 
 }
 //////////////////////////////////// FIM BUSCA LARGURA ///////////////////////////////////////////////
 
+///////////////////////////////////////////// BUSCA ORDENADA ////////////////////////////////////////
+struct Comparador {
+    bool operator()(const No* a, const No* b) const {
+        return a->custo > b->custo; // Critério de ordenação (menor custo primeiro)
+    }
+};
+
+bool buscaOrdenada(No *noInicial, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
+{
+    priority_queue<No*, vector<No*>, Comparador> filaPrioridade;
+
+
+    filaPrioridade.push(noInicial);
+    visitados.insert(noInicial->estado);
+
+    while (!filaPrioridade.empty())
+    {
+        No *noAtual = filaPrioridade.top();
+        filaPrioridade.pop();
+
+        if (estadoObjetivo(noAtual->estado))
+        {
+            caminho = reconstruirCaminho(noAtual);
+            return true;
+        }
+
+        vector<No *> sucessores = gerarSucessores(noAtual, board);
+        for (No *sucessor : sucessores)
+        {
+            if (visitados.find(sucessor->estado) == visitados.end())
+            {
+                filaPrioridade.push(sucessor);
+                visitados.insert(sucessor->estado);
+            }
+        }
+    }
+
+    return false;
+}
+//////////////////////////////////// FIM BUSCA ORDENADA ///////////////////////////////////////////////
+
 //////////////////////////////////// BUSCA BACKTRACKING //////////////////////////////////////////////
 bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
     if (estadoObjetivo(noAtual->estado))
@@ -203,9 +246,9 @@ bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Ope
     //visitados.erase(noAtual->estado);
     return false;
 }
-
-
 /////////////////////////////////// FIM BUSCA BACKTRACKING ///////////////////////////////////////////
+
+
 int main()
 {
 
@@ -262,7 +305,7 @@ int main()
 
 
     // Selecionar tipo de busca
-    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking" << endl;
+    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking, 4 - Ordenada" << endl;
     int searchType;
     cin >> searchType;
 
@@ -282,6 +325,9 @@ int main()
         break;
     case 3:
         found = buscaBacktracking(noInicial, visitados, caminho, *board);
+        break;
+    case 4:
+        found = buscaOrdenada(noInicial, visitados, caminho, *board);
         break;
     default:
         cout << "Tipo de busca inválido" << endl;
