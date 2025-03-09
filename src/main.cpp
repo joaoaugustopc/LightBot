@@ -8,6 +8,7 @@
 #include <cmath>
 #include <limits>
 
+
 #include "../include/models.hpp"
 
 //{height, isGoal, isLighted, isVisited}
@@ -151,12 +152,12 @@ vector<Operacao> reconstruirCaminho(No *no)
 }
 
 ///////////////////////////////////////////// BUSCA EM LARGURA ////////////////////////////////////////
-bool buscaBFS(No *noInicial, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
+bool buscaBFS(No *noAtual, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
 {
     queue<No *> fila;
 
-    fila.push(noInicial);
-    visitados.insert(noInicial->estado);
+    fila.push(noAtual);
+    visitados.insert(noAtual->estado);
 
     while (!fila.empty())
     {
@@ -210,36 +211,58 @@ bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Ope
 }
 /////////////////////////////////// FIM BUSCA BACKTRACKING ///////////////////////////////////////////
 
-
-
-
 /////////////////////////////////// HEURISTICA BUSCA GULOSA //////////////////////////////////////////
 struct ComparadorHeuristica {
     bool operator()(const No* a, const No* b) const {
-        return a->heuristica > b->heuristica; // Menor heurística primeiro
+        return a->heuristica > b->heuristica; // Força a escolher a menor heurística primeiro
     }
 };
 
 int heuristica(const Estado& estado, const Board& board) {
-    int menorDistancia = INT_MAX;
+    int menorDistancia = std::numeric_limits<int>::max();
 
-    for (const auto& objetivo : board.goals) {
+    for (const auto& objetivo : board.goals)
+    {
         int distancia = abs(estado.linha - objetivo.first) + abs(estado.coluna - objetivo.second);
         menorDistancia = std::min(menorDistancia, distancia);
     }
 
+    return menorDistancia;
+}
 ///////////////////////////////// FIM HEURISTICA BUSCA GULOSA ////////////////////////////////////////
 
-
-
-
 //////////////////////////////////////// BUSCA GULOSA ////////////////////////////////////////////////
+bool buscaGulosa(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
+    std::priority_queue<No*, std::vector<No*>, ComparadorHeuristica> filaPrioridade;
 
+    noAtual->heuristica = heuristica(noAtual->estado, board);
+    filaPrioridade.push(noAtual);
+    visitados.insert(noAtual->estado);
 
+    while (!filaPrioridade.empty()) {
+        No* noAtual = filaPrioridade.top();
+        filaPrioridade.pop();
 
+        if (estadoObjetivo(noAtual->estado)) {
+            caminho = reconstruirCaminho(noAtual);
+            return true;
+        }
 
+        std::vector<No*> sucessores = gerarSucessores(noAtual, board);
+        for (No* sucessor : sucessores) {
+            if (visitados.find(sucessor->estado) == visitados.end()) {
+                sucessor->heuristica = heuristica(sucessor->estado, board);
+                filaPrioridade.push(sucessor);
+                visitados.insert(sucessor->estado);
+            }
+        }
+    }
 
+    return false; // Caminho não foi encontrado
+}
 /////////////////////////////////////// FIM BUSCA GULOSA /////////////////////////////////////////////
+
+
 int main()
 {
 
@@ -296,12 +319,12 @@ int main()
 
 
     // Selecionar tipo de busca
-    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking" << endl;
+    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking, 4 - Gulosa" << endl;
     int searchType;
     cin >> searchType;
 
     Estado estadoInicial = Estado(0, 0, vector<bool>(board->goals.size(), false));
-    No *noInicial = new No(estadoInicial, nullptr, UP, 0);
+    No *noAtual = new No(estadoInicial, nullptr, UP, 0);
     std::set<Estado> visitados;
     std::vector<Operacao> caminho;
     bool found = false;
@@ -309,13 +332,16 @@ int main()
     switch (searchType)
     {
     case 1:
-        found = buscaBFS(noInicial, visitados, caminho, *board);
+        found = buscaBFS(noAtual, visitados, caminho, *board);
         break;
     case 2:
-        found = buscaDFS(noInicial, visitados, caminho, *board);
+        found = buscaDFS(noAtual, visitados, caminho, *board);
         break;
     case 3:
-        found = buscaBacktracking(noInicial, visitados, caminho, *board);
+        found = buscaBacktracking(noAtual, visitados, caminho, *board);
+        break;
+    case 4:
+        found = buscaGulosa(noAtual, visitados, caminho, *board);
         break;
     default:
         cout << "Tipo de busca inválido" << endl;
