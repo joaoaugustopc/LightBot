@@ -3,9 +3,11 @@
 #include <map>
 #include <queue>
 #include <algorithm>
-#include <vector>
 #include <set>
+#include <vector>
 #include <cmath>
+#include <limits>
+
 #include "../include/models.hpp"
 
 //{height, isGoal, isLighted, isVisited}
@@ -206,21 +208,19 @@ bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Ope
     //visitados.erase(noAtual->estado);
     return false;
 }
-
-
 /////////////////////////////////// FIM BUSCA BACKTRACKING ///////////////////////////////////////////
 
-///////////////////////////////// HEURISTICA BUSCA GULOSA ////////////////////////////////////////////
-struct ComparadorHeuristica
-{
-    bool operator()(const No *a, const No *b) const
-    {
-        return a->heuristica > b->heuristica;
+
+
+
+/////////////////////////////////// HEURISTICA BUSCA GULOSA //////////////////////////////////////////
+struct ComparadorHeuristica {
+    bool operator()(const No* a, const No* b) const {
+        return a->heuristica > b->heuristica; // Menor heurística primeiro
     }
 };
 
-int heuristica(const Estado& estado, const Board& board)
-{
+int heuristica(const Estado& estado, const Board& board) {
     int menorDistancia = INT_MAX;
 
     for (const auto& objetivo : board.goals) {
@@ -228,16 +228,18 @@ int heuristica(const Estado& estado, const Board& board)
         menorDistancia = std::min(menorDistancia, distancia);
     }
 
-    return menorDistancia;
-}
-//////////////////////////////// FIM HEURISTICA BUSCA GULOSA /////////////////////////////////////////
-
-////////////////////////////////// HEURISTICA BUSCA GULOSA ///////////////////////////////////////////
+///////////////////////////////// FIM HEURISTICA BUSCA GULOSA ////////////////////////////////////////
 
 
 
-////////////////////////////////// HEURISTICA BUSCA GULOSA ///////////////////////////////////////////
 
+//////////////////////////////////////// BUSCA GULOSA ////////////////////////////////////////////////
+
+
+
+
+
+/////////////////////////////////////// FIM BUSCA GULOSA /////////////////////////////////////////////
 int main()
 {
 
