@@ -13,9 +13,10 @@ typedef struct No
     Estado estado;
     No* pai;
     Operacao op; 
-    int custo; 
+    int custo;
+    int heuristica;
 
-    No(const Estado& e, No* p, Operacao o, int c) : estado(e), pai(p), op(o), custo(c) {}
+    No(const Estado& e, No* p, Operacao o, int c) : estado(e), pai(p), op(o), custo(c), heuristica(0) {}
 } No;
 
 

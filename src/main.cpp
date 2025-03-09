@@ -3,6 +3,9 @@
 #include <map>
 #include <queue>
 #include <algorithm>
+#include <vector>
+#include <set>
+#include <cmath>
 #include "../include/models.hpp"
 
 //{height, isGoal, isLighted, isVisited}
@@ -206,6 +209,35 @@ bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Ope
 
 
 /////////////////////////////////// FIM BUSCA BACKTRACKING ///////////////////////////////////////////
+
+///////////////////////////////// HEURISTICA BUSCA GULOSA ////////////////////////////////////////////
+struct ComparadorHeuristica
+{
+    bool operator()(const No *a, const No *b) const
+    {
+        return a->heuristica > b->heuristica;
+    }
+};
+
+int heuristica(const Estado& estado, const Board& board)
+{
+    int menorDistancia = INT_MAX;
+
+    for (const auto& objetivo : board.goals) {
+        int distancia = abs(estado.linha - objetivo.first) + abs(estado.coluna - objetivo.second);
+        menorDistancia = std::min(menorDistancia, distancia);
+    }
+
+    return menorDistancia;
+}
+//////////////////////////////// FIM HEURISTICA BUSCA GULOSA /////////////////////////////////////////
+
+////////////////////////////////// HEURISTICA BUSCA GULOSA ///////////////////////////////////////////
+
+
+
+////////////////////////////////// HEURISTICA BUSCA GULOSA ///////////////////////////////////////////
+
 int main()
 {
 
