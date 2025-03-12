@@ -399,6 +399,9 @@ int main()
         case 5:
             found = buscaAEstrela(noAtual, visitados, caminho, *board);
             break;
+        case 6:
+            found = buscaAEstrela(noAtual, visitados, caminho, *board);
+            break;
 
     default:
         cout << "Tipo de busca inválido" << endl;
