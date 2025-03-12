@@ -1,1 +1,4 @@
 LightBot
+# Ignorar a pasta .vscode
+.vscode/
+.vscode/launch.json

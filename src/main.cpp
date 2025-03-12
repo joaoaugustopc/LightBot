@@ -263,6 +263,59 @@ bool buscaGulosa(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>
 /////////////////////////////////////// FIM BUSCA GULOSA /////////////////////////////////////////////
 
 
+
+//////////////////////////////////////// BUSCA A* ////////////////////////////////////////////////
+struct ComparadorCustoTotal {
+   bool operator()(const No* a, const No* b) const {
+        return a->custo > b->custo; // Ordena pelo menor custo total
+    }
+};
+
+bool buscaAEstrela(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& tabuleiro) {
+    // Fila de prioridade para A*, ordenada por f(n) = g(n) + h(n)
+    std::priority_queue<No*, std::vector<No*>, ComparadorCustoTotal> filaPrioridade;
+
+    // Inicializa o nó atual
+    noAtual->custoReal = 0; // g(n): custo real do caminho percorrido até o nó atual
+    noAtual->heuristica = heuristica(noAtual->estado, tabuleiro); // h(n): estimativa do custo restante
+    noAtual->custo = noAtual->custoReal + noAtual->heuristica; // f(n) = g(n) + h(n)
+    filaPrioridade.push(noAtual);
+    visitados.insert(noAtual->estado);
+
+    while (!filaPrioridade.empty()) {
+        No* noAtual = filaPrioridade.top();
+        filaPrioridade.pop();
+
+        // Verifica se o nó atual é o objetivo
+        if (estadoObjetivo(noAtual->estado)) {
+            caminho = reconstruirCaminho(noAtual);
+            return true;
+        }
+
+        // Gera os sucessores do nó atual
+        std::vector<No*> sucessores = gerarSucessores(noAtual, tabuleiro);
+        for (No* sucessor : sucessores) {
+            // Calcula o custo real do sucessor (g(n))
+            int custoRealSucessor = noAtual->custoReal + 1; // Assume-se que o custo de cada operação é 1
+
+            // Verifica se o sucessor já foi visitado ou se encontrou um caminho melhor
+            if (visitados.find(sucessor->estado) == visitados.end() || custoRealSucessor < sucessor->custoReal) {
+                sucessor->custoReal = custoRealSucessor; // Atualiza g(n)
+                sucessor->heuristica = heuristica(sucessor->estado, tabuleiro); // Calcula h(n)
+                sucessor->custo = sucessor->custoReal + sucessor->heuristica; // f(n) = g(n) + h(n)
+
+                // Adiciona o sucessor à fila de prioridade
+                filaPrioridade.push(sucessor);
+                visitados.insert(sucessor->estado);
+            }
+        }
+    }
+
+    return false; // Caminho não foi encontrado
+}
+
+/////////////////////////////////////// FINAL DA BUSCA A* /////////////////////////////////////////////
+
 int main()
 {
 
@@ -331,18 +384,22 @@ int main()
 
     switch (searchType)
     {
-    case 1:
-        found = buscaBFS(noAtual, visitados, caminho, *board);
-        break;
-    case 2:
-        found = buscaDFS(noAtual, visitados, caminho, *board);
-        break;
-    case 3:
-        found = buscaBacktracking(noAtual, visitados, caminho, *board);
-        break;
-    case 4:
-        found = buscaGulosa(noAtual, visitados, caminho, *board);
-        break;
+        case 1:
+            found = buscaBFS(noAtual, visitados, caminho, *board);
+            break;
+        case 2:
+            found = buscaDFS(noAtual, visitados, caminho, *board);
+            break;
+        case 3:
+            found = buscaBacktracking(noAtual, visitados, caminho, *board);
+            break;
+        case 4:
+            found = buscaGulosa(noAtual, visitados, caminho, *board);
+            break;
+        case 5:
+            found = buscaAEstrela(noAtual, visitados, caminho, *board);
+            break;
+
     default:
         cout << "Tipo de busca inválido" << endl;
         return 0;
