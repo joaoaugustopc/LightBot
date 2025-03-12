@@ -103,7 +103,7 @@ void imprimirMapaComCaminho(int numLinhas, int numColunas,
     mapaSolucao[linha][coluna] = "R";
 
     // **Imprimir o mapa atualizado com tabulação automática**
-    std::cout << "\nMapa com Caminho Solução e Ordem do Percurso:\n\n";
+    std::cout << "\nMapa com Caminho Solucao e Ordem do Percurso:\n\n";
     for (const auto &linha : mapaSolucao)
     {
         std::cout << "  "; // Indenta um pouco à esquerda para melhor alinhamento
@@ -337,7 +337,7 @@ int main()
         board->setBoard(level3);
         break;
     default:
-        cout << "Mapa inválido" << endl;
+        cout << "Mapa invalido" << endl;
         return 0;
     }
     //////////////////////////////////////////////////////
@@ -372,7 +372,7 @@ int main()
 
 
     // Selecionar tipo de busca
-    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking, 4 - Gulosa" << endl;
+    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking, 4 - Gulosa, 5 - A*" << endl;
     int searchType;
     cin >> searchType;
 
@@ -397,9 +397,6 @@ int main()
             found = buscaGulosa(noAtual, visitados, caminho, *board);
             break;
         case 5:
-            found = buscaAEstrela(noAtual, visitados, caminho, *board);
-            break;
-        case 6:
             found = buscaAEstrela(noAtual, visitados, caminho, *board);
             break;
 
@@ -428,7 +425,7 @@ int main()
     }
     else
     {
-        cout << "Caminho não encontrado" << endl;
+        cout << "Caminho nao encontrado" << endl;
     }
 
     cout << "Total de Movimentos: " << caminho.size() << endl;
