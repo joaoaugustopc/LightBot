@@ -5,12 +5,13 @@
 vector<No*> gerarSucessores(const No* noAtual,const Board& board){
     vector<No*> sucessores;
 
-    // Operação para cima
-    No* up = moveUp(noAtual, board);
-    if (up != nullptr){
-        sucessores.push_back(up);
-    }
+    // Operação para baixo
 
+    No* down = moveDown(noAtual, board);
+    if (down != nullptr){
+        sucessores.push_back(down);
+    }
+    
     // Operação para direita
 
     No* right = moveRight(noAtual, board);
@@ -18,18 +19,17 @@ vector<No*> gerarSucessores(const No* noAtual,const Board& board){
         sucessores.push_back(right);
     }
 
-    // Operação para baixo
-
-    No* down = moveDown(noAtual, board);
-    if (down != nullptr){
-        sucessores.push_back(down);
-    }
-
     // Operação para esquerda
 
     No* left = moveLeft(noAtual, board);
     if (left != nullptr){
         sucessores.push_back(left);
+    }
+    
+    // Operação para cima
+    No* up = moveUp(noAtual, board);
+    if (up != nullptr){
+        sucessores.push_back(up);
     }
 
     // Operação para acender
@@ -61,20 +61,20 @@ No* getSucessor(const No* noAtual, Operacao op, const Board& board){
 vector<Operacao> listaOperacoes(const No* noAtual, const Board& board){
     vector<Operacao> operacoes;
 
-    if (canMoveUp(noAtual, board)){
-        operacoes.push_back(UP);
+    if (canMoveDown(noAtual, board)){
+        operacoes.push_back(DOWN);
     }
 
     if (canMoveRight(noAtual, board)){
         operacoes.push_back(RIGHT);
     }
 
-    if (canMoveDown(noAtual, board)){
-        operacoes.push_back(DOWN);
-    }
-
     if (canMoveLeft(noAtual, board)){
         operacoes.push_back(LEFT);
+    }
+
+    if (canMoveUp(noAtual, board)){
+        operacoes.push_back(UP);
     }
 
     if (canLight(noAtual, board)){
