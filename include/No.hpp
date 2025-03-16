@@ -16,8 +16,7 @@ typedef struct No
     int custo;
     int heuristica;
     int custoReal;  //// salva o custo real do caminho percorrido até o nó atual (A*)
+    std::vector<No*> sucessores;  //// salva os sucessores do nó atual
 
     No(const Estado& e, No* p, Operacao o, int c) : estado(e), pai(p), op(o), custo(c), heuristica(0) {}
 } No;
-
-

@@ -7,6 +7,9 @@
 #include <vector>
 #include <cmath>
 #include <limits>
+#include <fstream>
+#include <functional> 
+#include <unordered_map>
 
 
 #include "../include/models.hpp"
@@ -116,6 +119,53 @@ void imprimirMapaComCaminho(int numLinhas, int numColunas,
     std::cout << '\n';
 }
 
+void gerarArquivoDOT(No* raiz, const std::string& nomeArquivo, const std::vector<Operacao>& caminho) {
+    std::ofstream arquivo(nomeArquivo);
+    arquivo << "digraph G {" << std::endl;
+
+    // Conjunto para armazenar os nós que fazem parte do caminho solução
+    std::set<No*> nosCaminho;
+    No* noAtual = raiz;
+    for (const auto& op : caminho) {
+        nosCaminho.insert(noAtual);
+        for (No* sucessor : noAtual->sucessores) {
+            if (sucessor->op == op) {
+                noAtual = sucessor;
+                break;
+            }
+        }
+    }
+    nosCaminho.insert(noAtual); // Adiciona o nó final
+    
+
+    std::function<void(No*)> adicionarNos = [&](No* no) {
+        if (!no) return;
+
+        // Adiciona o nó atual ao arquivo DOT com destaque se fizer parte do caminho solução
+        if (nosCaminho.find(no) != nosCaminho.end()) {
+            arquivo << "  \"" << no << "\" [label=\"(" << no->estado.linha << "," << no->estado.coluna << ")\", style=filled, fillcolor=yellow];" << std::endl;
+        } else {
+            arquivo << "  \"" << no << "\" [label=\"(" << no->estado.linha << "," << no->estado.coluna << ")\"];" << std::endl;
+        }
+        //arquivo << "  \"" << no << "\" [label=\"(" << no->estado.linha << "," << no->estado.coluna << ")\"];" << std::endl;
+        if (no->pai) {
+            if (nosCaminho.find(no) != nosCaminho.end() && nosCaminho.find(no->pai) != nosCaminho.end()) {
+                arquivo << "  \"" << no->pai << "\" -> \"" << no << "\" [color=red, penwidth=2.0];" << std::endl;
+            } else {
+                arquivo << "  \"" << no->pai << "\" -> \"" << no << "\";" << std::endl;
+            }
+            //arquivo << "  \"" << no->pai << "\" -> \"" << no << "\";" << std::endl;
+        }
+        for (No* sucessor : no->sucessores) {
+            adicionarNos(sucessor);
+        }
+    };
+
+    adicionarNos(raiz);
+    arquivo << "}" << std::endl;
+    arquivo.close();
+}
+
 /////////////////////////////////////////// BUSCA EM PROFUNDIDADE ////////////////////////////////////
 bool buscaDFS(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
     if(estadoObjetivo(noAtual->estado))
@@ -127,6 +177,7 @@ bool buscaDFS(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& c
     for(No* sucessor : sucessores) {
         if(visitados.find(sucessor->estado) == visitados.end()) {
             caminho.push_back(sucessor->op);
+            noAtual->sucessores.push_back(sucessor);
             if(buscaDFS(sucessor, visitados, caminho, board))
                 return true;
             caminho.pop_back();
@@ -178,6 +229,7 @@ bool buscaBFS(No *noAtual, set<Estado> &visitados, vector<Operacao> &caminho, co
             {
                 fila.push(sucessor);
                 visitados.insert(sucessor->estado);
+                noAtual->sucessores.push_back(sucessor);
             }
         }
     }
@@ -200,6 +252,7 @@ bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Ope
         No* sucessor = getSucessor(noAtual, operacao, board);
         if (visitados.find(sucessor->estado) == visitados.end()) {
             caminho.push_back(operacao);
+            noAtual->sucessores.push_back(sucessor);
             if (buscaBacktracking(sucessor, visitados, caminho, board))
                 return true;
             caminho.pop_back();
@@ -254,6 +307,7 @@ bool buscaGulosa(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>
                 sucessor->heuristica = heuristica(sucessor->estado, board);
                 filaPrioridade.push(sucessor);
                 visitados.insert(sucessor->estado);
+                noAtual->sucessores.push_back(sucessor);
             }
         }
     }
@@ -307,6 +361,7 @@ bool buscaAEstrela(No* noAtual, std::set<Estado>& visitados, std::vector<Operaca
                 // Adiciona o sucessor à fila de prioridade
                 filaPrioridade.push(sucessor);
                 visitados.insert(sucessor->estado);
+                noAtual->sucessores.push_back(sucessor);
             }
         }
     }
@@ -422,6 +477,9 @@ int main()
             }
         }
         imprimirMapaComCaminho(board->n_lines, board->n_columns, mapaChar, caminho, 0, 0);
+        gerarArquivoDOT(noAtual, "arvore_busca.dot", caminho);
+        system("dot -Tpng arvore_busca.dot -o arvore_busca.png");
+        std::cout << "Árvore de busca gerada: arvore_busca.png" << std::endl;
     }
     else
     {
