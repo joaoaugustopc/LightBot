@@ -186,6 +186,51 @@ bool buscaBFS(No *noAtual, set<Estado> &visitados, vector<Operacao> &caminho, co
 }
 //////////////////////////////////// FIM BUSCA LARGURA ///////////////////////////////////////////////
 
+///////////////////////////////////////////// BUSCA ORDENADA ////////////////////////////////////////
+struct Comparador {
+    bool operator()(const No* a, const No* b) const {
+        return a->custo > b->custo; // Critério de ordenação (menor custo primeiro)
+    }
+};
+
+bool buscaOrdenada(No *noInicial, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
+{
+    priority_queue<No*, vector<No*>, Comparador> filaPrioridade;
+    int profundidade = 0; // Contador de profundidade para diferenciar os custos
+
+    filaPrioridade.push(noInicial);
+    visitados.insert(noInicial->estado);
+
+    while (!filaPrioridade.empty())
+    {
+        No *noAtual = filaPrioridade.top();
+        filaPrioridade.pop();
+
+        if (estadoObjetivo(noAtual->estado))
+        {
+            caminho = reconstruirCaminho(noAtual);
+            return true;
+        }
+
+        profundidade++; // Incrementa a cada iteração para modificar o custo
+
+        vector<No *> sucessores = gerarSucessores(noAtual, board);
+        for (No *sucessor : sucessores)
+        {
+            if (visitados.find(sucessor->estado) == visitados.end())
+            {
+                sucessor->custo += profundidade; // Modifica o custo com base na profundidade
+                filaPrioridade.push(sucessor);
+                visitados.insert(sucessor->estado);
+            }
+        }
+    }
+
+    return false;
+}
+
+//////////////////////////////////// FIM BUSCA ORDENADA ///////////////////////////////////////////////
+
 //////////////////////////////////// BUSCA BACKTRACKING //////////////////////////////////////////////
 bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
     if (estadoObjetivo(noAtual->estado))
