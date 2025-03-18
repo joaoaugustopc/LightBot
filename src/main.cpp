@@ -3,6 +3,12 @@
 #include <map>
 #include <queue>
 #include <algorithm>
+#include <set>
+#include <vector>
+#include <cmath>
+#include <limits>
+
+
 #include "../include/models.hpp"
 #include <string>
 
@@ -99,7 +105,7 @@ void imprimirMapaComCaminho(int numLinhas, int numColunas,
     mapaSolucao[linha][coluna] = "R";
 
     // **Imprimir o mapa atualizado com tabulação automática**
-    std::cout << "\nMapa com Caminho Solução e Ordem do Percurso:\n\n";
+    std::cout << "\nMapa com Caminho Solucao e Ordem do Percurso:\n\n";
     for (const auto &linha : mapaSolucao)
     {
         std::cout << "  "; // Indenta um pouco à esquerda para melhor alinhamento
@@ -148,12 +154,12 @@ vector<Operacao> reconstruirCaminho(No *no)
 }
 
 ///////////////////////////////////////////// BUSCA EM LARGURA ////////////////////////////////////////
-bool buscaBFS(No *noInicial, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
+bool buscaBFS(No *noAtual, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
 {
     queue<No *> fila;
 
-    fila.push(noInicial);
-    visitados.insert(noInicial->estado);
+    fila.push(noAtual);
+    visitados.insert(noAtual->estado);
 
     while (!fila.empty())
     {
@@ -252,6 +258,110 @@ bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Ope
 }
 /////////////////////////////////// FIM BUSCA BACKTRACKING ///////////////////////////////////////////
 
+/////////////////////////////////// HEURISTICA BUSCA GULOSA //////////////////////////////////////////
+struct ComparadorHeuristica {
+    bool operator()(const No* a, const No* b) const {
+        return a->heuristica > b->heuristica; // Força a escolher a menor heurística primeiro
+    }
+};
+
+int heuristica(const Estado& estado, const Board& board) {
+    int menorDistancia = std::numeric_limits<int>::max();
+
+    for (const auto& objetivo : board.goals)
+    {
+        int distancia = abs(estado.linha - objetivo.first) + abs(estado.coluna - objetivo.second);
+        menorDistancia = std::min(menorDistancia, distancia);
+    }
+
+    return menorDistancia;
+}
+///////////////////////////////// FIM HEURISTICA BUSCA GULOSA ////////////////////////////////////////
+
+//////////////////////////////////////// BUSCA GULOSA ////////////////////////////////////////////////
+bool buscaGulosa(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
+    std::priority_queue<No*, std::vector<No*>, ComparadorHeuristica> filaPrioridade;
+
+    noAtual->heuristica = heuristica(noAtual->estado, board);
+    filaPrioridade.push(noAtual);
+    visitados.insert(noAtual->estado);
+
+    while (!filaPrioridade.empty()) {
+        No* noAtual = filaPrioridade.top();
+        filaPrioridade.pop();
+
+        if (estadoObjetivo(noAtual->estado)) {
+            caminho = reconstruirCaminho(noAtual);
+            return true;
+        }
+
+        std::vector<No*> sucessores = gerarSucessores(noAtual, board);
+        for (No* sucessor : sucessores) {
+            if (visitados.find(sucessor->estado) == visitados.end()) {
+                sucessor->heuristica = heuristica(sucessor->estado, board);
+                filaPrioridade.push(sucessor);
+                visitados.insert(sucessor->estado);
+            }
+        }
+    }
+
+    return false; // Caminho não foi encontrado
+}
+/////////////////////////////////////// FIM BUSCA GULOSA /////////////////////////////////////////////
+
+
+
+//////////////////////////////////////// BUSCA A* ////////////////////////////////////////////////
+struct ComparadorCustoTotal {
+   bool operator()(const No* a, const No* b) const {
+        return a->custo > b->custo; // Ordena pelo menor custo total
+    }
+};
+
+bool buscaAEstrela(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& tabuleiro) {
+    // Fila de prioridade para A*, ordenada por f(n) = g(n) + h(n)
+    std::priority_queue<No*, std::vector<No*>, ComparadorCustoTotal> filaPrioridade;
+
+    // Inicializa o nó atual
+    noAtual->custoReal = 0; // g(n): custo real do caminho percorrido até o nó atual
+    noAtual->heuristica = heuristica(noAtual->estado, tabuleiro); // h(n): estimativa do custo restante
+    noAtual->custo = noAtual->custoReal + noAtual->heuristica; // f(n) = g(n) + h(n)
+    filaPrioridade.push(noAtual);
+    visitados.insert(noAtual->estado);
+
+    while (!filaPrioridade.empty()) {
+        No* noAtual = filaPrioridade.top();
+        filaPrioridade.pop();
+
+        // Verifica se o nó atual é o objetivo
+        if (estadoObjetivo(noAtual->estado)) {
+            caminho = reconstruirCaminho(noAtual);
+            return true;
+        }
+
+        // Gera os sucessores do nó atual
+        std::vector<No*> sucessores = gerarSucessores(noAtual, tabuleiro);
+        for (No* sucessor : sucessores) {
+            // Calcula o custo real do sucessor (g(n))
+            int custoRealSucessor = noAtual->custoReal + 1; // Assume-se que o custo de cada operação é 1
+
+            // Verifica se o sucessor já foi visitado ou se encontrou um caminho melhor
+            if (visitados.find(sucessor->estado) == visitados.end() || custoRealSucessor < sucessor->custoReal) {
+                sucessor->custoReal = custoRealSucessor; // Atualiza g(n)
+                sucessor->heuristica = heuristica(sucessor->estado, tabuleiro); // Calcula h(n)
+                sucessor->custo = sucessor->custoReal + sucessor->heuristica; // f(n) = g(n) + h(n)
+
+                // Adiciona o sucessor à fila de prioridade
+                filaPrioridade.push(sucessor);
+                visitados.insert(sucessor->estado);
+            }
+        }
+    }
+
+    return false; // Caminho não foi encontrado
+}
+
+/////////////////////////////////////// FINAL DA BUSCA A* /////////////////////////////////////////////
 
 int main()
 {
@@ -274,7 +384,7 @@ int main()
         board->setBoard(level3);
         break;
     default:
-        cout << "Mapa inválido" << endl;
+        cout << "Mapa invalido" << endl;
         return 0;
     }
     //////////////////////////////////////////////////////
@@ -309,30 +419,34 @@ int main()
 
 
     // Selecionar tipo de busca
-    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking, 4 - Ordenada" << endl;
+    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking, 4 - Gulosa, 5 - A*" << endl;
     int searchType;
     cin >> searchType;
 
     Estado estadoInicial = Estado(0, 0, vector<bool>(board->goals.size(), false));
-    No *noInicial = new No(estadoInicial, nullptr, UP, 0);
+    No *noAtual = new No(estadoInicial, nullptr, UP, 0);
     std::set<Estado> visitados;
     std::vector<Operacao> caminho;
     bool found = false;
 
     switch (searchType)
     {
-    case 1:
-        found = buscaBFS(noInicial, visitados, caminho, *board);
-        break;
-    case 2:
-        found = buscaDFS(noInicial, visitados, caminho, *board);
-        break;
-    case 3:
-        found = buscaBacktracking(noInicial, visitados, caminho, *board);
-        break;
-    case 4:
-        found = buscaOrdenada(noInicial, visitados, caminho, *board);
-        break;
+        case 1:
+            found = buscaBFS(noAtual, visitados, caminho, *board);
+            break;
+        case 2:
+            found = buscaDFS(noAtual, visitados, caminho, *board);
+            break;
+        case 3:
+            found = buscaBacktracking(noAtual, visitados, caminho, *board);
+            break;
+        case 4:
+            found = buscaGulosa(noAtual, visitados, caminho, *board);
+            break;
+        case 5:
+            found = buscaAEstrela(noAtual, visitados, caminho, *board);
+            break;
+
     default:
         cout << "Tipo de busca inválido" << endl;
         return 0;
@@ -358,7 +472,7 @@ int main()
     }
     else
     {
-        cout << "Caminho não encontrado" << endl;
+        cout << "Caminho nao encontrado" << endl;
     }
 
     cout << "Total de Movimentos: " << caminho.size() << endl;
