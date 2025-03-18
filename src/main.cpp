@@ -192,7 +192,7 @@ struct Comparador {
 bool buscaOrdenada(No *noInicial, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
 {
     priority_queue<No*, vector<No*>, Comparador> filaPrioridade;
-
+    int profundidade = 0; // Contador de profundidade para diferenciar os custos
 
     filaPrioridade.push(noInicial);
     visitados.insert(noInicial->estado);
@@ -208,11 +208,14 @@ bool buscaOrdenada(No *noInicial, set<Estado> &visitados, vector<Operacao> &cami
             return true;
         }
 
+        profundidade++; // Incrementa a cada iteração para modificar o custo
+
         vector<No *> sucessores = gerarSucessores(noAtual, board);
         for (No *sucessor : sucessores)
         {
             if (visitados.find(sucessor->estado) == visitados.end())
             {
+                sucessor->custo += profundidade; // Modifica o custo com base na profundidade
                 filaPrioridade.push(sucessor);
                 visitados.insert(sucessor->estado);
             }
@@ -221,6 +224,7 @@ bool buscaOrdenada(No *noInicial, set<Estado> &visitados, vector<Operacao> &cami
 
     return false;
 }
+
 //////////////////////////////////// FIM BUSCA ORDENADA ///////////////////////////////////////////////
 
 //////////////////////////////////// BUSCA BACKTRACKING //////////////////////////////////////////////
