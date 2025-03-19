@@ -162,7 +162,6 @@ vector<Operacao> reconstruirCaminho(No *no)
 
 ///////////////////////////////////////////// BUSCA EM LARGURA ////////////////////////////////////////
 bool buscaBFS(No *noAtual, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
-bool buscaBFS(No *noAtual, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
 {
     queue<No *> fila;
 
