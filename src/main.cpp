@@ -419,7 +419,7 @@ int main()
 
 
     // Selecionar tipo de busca
-    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking, 4 - Gulosa, 5 - A*" << endl;
+    cout << "Selecione o tipo de busca: 1 - BFS, 2 - DFS, 3 - Backtracking, 4 - Gulosa, 5 - A*, 6 - Ordenada" << endl;
     int searchType;
     cin >> searchType;
 
@@ -445,6 +445,9 @@ int main()
             break;
         case 5:
             found = buscaAEstrela(noAtual, visitados, caminho, *board);
+            break;
+        case 6:
+            found = buscaOrdenada(noAtual, visitados, caminho, *board);
             break;
 
     default:
