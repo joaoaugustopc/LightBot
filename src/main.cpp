@@ -7,17 +7,15 @@
 #include <vector>
 #include <cmath>
 #include <limits>
-
-
-#include <set>
-#include <vector>
-#include <cmath>
-#include <limits>
+#include <fstream>
+#include <functional> 
+#include <unordered_map>
+#include <iostream>
+#include <unordered_set>
 
 
 #include "../include/models.hpp"
 #include <string>
-
 
 //{height, isGoal, isLighted, isVisited}
 vector<vector<BoardCell>> level1 = {
@@ -50,6 +48,8 @@ vector<vector<BoardCell>> level3 = {
     {BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0), BoardCell(0, 0)}};
 
 using namespace std;
+
+
 
 // Função para imprimir o mapa com o caminho solução
 void imprimirMapaComCaminho(int numLinhas, int numColunas,
@@ -112,7 +112,6 @@ void imprimirMapaComCaminho(int numLinhas, int numColunas,
 
     // **Imprimir o mapa atualizado com tabulação automática**
     std::cout << "\nMapa com Caminho Solucao e Ordem do Percurso:\n\n";
-    std::cout << "\nMapa com Caminho Solucao e Ordem do Percurso:\n\n";
     for (const auto &linha : mapaSolucao)
     {
         std::cout << "  "; // Indenta um pouco à esquerda para melhor alinhamento
@@ -123,6 +122,53 @@ void imprimirMapaComCaminho(int numLinhas, int numColunas,
         std::cout << '\n';
     }
     std::cout << '\n';
+}
+
+void gerarArquivoDOT(No* raiz, const std::string& nomeArquivo, const std::vector<Operacao>& caminho) {
+    std::ofstream arquivo(nomeArquivo);
+    arquivo << "digraph G {" << std::endl;
+
+    // Conjunto para armazenar os nós que fazem parte do caminho solução
+    std::set<No*> nosCaminho;
+    No* noAtual = raiz;
+    for (const auto& op : caminho) {
+        nosCaminho.insert(noAtual);
+        for (No* sucessor : noAtual->sucessores) {
+            if (sucessor->op == op) {
+                noAtual = sucessor;
+                break;
+            }
+        }
+    }
+    nosCaminho.insert(noAtual); // Adiciona o nó final
+    
+
+    std::function<void(No*)> adicionarNos = [&](No* no) {
+        if (!no) return;
+
+        // Adiciona o nó atual ao arquivo DOT com destaque se fizer parte do caminho solução
+        if (nosCaminho.find(no) != nosCaminho.end()) {
+            arquivo << "  \"" << no << "\" [label=\"(" << no->estado.linha << "," << no->estado.coluna << ")\", style=filled, fillcolor=yellow];" << std::endl;
+        } else {
+            arquivo << "  \"" << no << "\" [label=\"(" << no->estado.linha << "," << no->estado.coluna << ")\"];" << std::endl;
+        }
+        //arquivo << "  \"" << no << "\" [label=\"(" << no->estado.linha << "," << no->estado.coluna << ")\"];" << std::endl;
+        if (no->pai) {
+            if (nosCaminho.find(no) != nosCaminho.end() && nosCaminho.find(no->pai) != nosCaminho.end()) {
+                arquivo << "  \"" << no->pai << "\" -> \"" << no << "\" [color=red, penwidth=2.0];" << std::endl;
+            } else {
+                arquivo << "  \"" << no->pai << "\" -> \"" << no << "\";" << std::endl;
+            }
+            //arquivo << "  \"" << no->pai << "\" -> \"" << no << "\";" << std::endl;
+        }
+        for (No* sucessor : no->sucessores) {
+            adicionarNos(sucessor);
+        }
+    };
+
+    adicionarNos(raiz);
+    arquivo << "}" << std::endl;
+    arquivo.close();
 }
 
 /////////////////////////////////////////// BUSCA EM PROFUNDIDADE ////////////////////////////////////
@@ -136,6 +182,7 @@ bool buscaDFS(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& c
     for(No* sucessor : sucessores) {
         if(visitados.find(sucessor->estado) == visitados.end()) {
             caminho.push_back(sucessor->op);
+            noAtual->sucessores.push_back(sucessor);
             if(buscaDFS(sucessor, visitados, caminho, board))
                 return true;
             caminho.pop_back();
@@ -167,8 +214,6 @@ bool buscaBFS(No *noAtual, set<Estado> &visitados, vector<Operacao> &caminho, co
 
     fila.push(noAtual);
     visitados.insert(noAtual->estado);
-    fila.push(noAtual);
-    visitados.insert(noAtual->estado);
 
     while (!fila.empty())
     {
@@ -189,6 +234,7 @@ bool buscaBFS(No *noAtual, set<Estado> &visitados, vector<Operacao> &caminho, co
             {
                 fila.push(sucessor);
                 visitados.insert(sucessor->estado);
+                noAtual->sucessores.push_back(sucessor);
             }
         }
     }
@@ -197,16 +243,99 @@ bool buscaBFS(No *noAtual, set<Estado> &visitados, vector<Operacao> &caminho, co
 }
 //////////////////////////////////// FIM BUSCA LARGURA ///////////////////////////////////////////////
 
-///////////////////////////////////////////// BUSCA ORDENADA ////////////////////////////////////////
-struct Comparador {
+//////////////////////////////////// BUSCA BACKTRACKING //////////////////////////////////////////////
+bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
+    if (estadoObjetivo(noAtual->estado))
+        return true;
+
+    visitados.insert(noAtual->estado);
+
+    //std::vector<No*> sucessores = gerarSucessores(noAtual, board);
+    std::vector<Operacao> operacoes = listaOperacoes(noAtual, board);
+
+    for (Operacao operacao : operacoes) {
+        No* sucessor = getSucessor(noAtual, operacao, board);
+        if (visitados.find(sucessor->estado) == visitados.end()) {
+            caminho.push_back(operacao);
+            noAtual->sucessores.push_back(sucessor);
+            if (buscaBacktracking(sucessor, visitados, caminho, board))
+                return true;
+            caminho.pop_back();
+        }
+    }
+
+    //visitados.erase(noAtual->estado);
+    return false;
+}
+/////////////////////////////////// FIM BUSCA BACKTRACKING ///////////////////////////////////////////
+
+/////////////////////////////////// HEURISTICA BUSCA GULOSA //////////////////////////////////////////
+struct ComparadorHeuristica {
     bool operator()(const No* a, const No* b) const {
-        return a->custo > b->custo; // Critério de ordenação (menor custo primeiro)
+        return a->heuristica > b->heuristica; // Força a escolher a menor heurística primeiro
+    }
+};
+
+int heuristica(const Estado& estado, const Board& board) {
+    int menorDistancia = std::numeric_limits<int>::max();
+    
+    for (const auto& objetivo : board.goals) {
+        int distancia = abs(estado.linha - objetivo.first) + abs(estado.coluna - objetivo.second);
+        
+        menorDistancia = std::min(menorDistancia, distancia);
+    }
+
+    
+    return menorDistancia;
+}
+
+
+///////////////////////////////// FIM HEURISTICA BUSCA GULOSA ////////////////////////////////////////
+
+//////////////////////////////////////// BUSCA GULOSA ////////////////////////////////////////////////
+bool buscaGulosa(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
+    std::priority_queue<No*, std::vector<No*>, ComparadorHeuristica> filaPrioridade;
+
+    noAtual->heuristica = heuristica(noAtual->estado, board);
+    filaPrioridade.push(noAtual);
+    visitados.insert(noAtual->estado);
+
+    while (!filaPrioridade.empty()) {
+        No* noAtual = filaPrioridade.top();
+        filaPrioridade.pop();
+
+        if (estadoObjetivo(noAtual->estado)) {
+            caminho = reconstruirCaminho(noAtual);
+            return true;
+        }
+
+        std::vector<No*> sucessores = gerarSucessores(noAtual, board);
+        for (No* sucessor : sucessores) {
+            if (visitados.find(sucessor->estado) == visitados.end()) {
+                sucessor->heuristica = heuristica(sucessor->estado, board);
+                filaPrioridade.push(sucessor);
+                visitados.insert(sucessor->estado);
+                noAtual->sucessores.push_back(sucessor);
+            }
+        }
+    }
+
+    return false; // Caminho não foi encontrado
+}
+/////////////////////////////////////// FIM BUSCA GULOSA /////////////////////////////////////////////
+
+///////////////////////////////////////////// BUSCA ORDENADA ////////////////////////////////////////
+struct ComparadorOrdenado {
+    bool operator()(const No* a, const No* b) const {
+        int pesoA = a->custo + (rand() % 5); // Critério aleatório para diferenciar da busca em largura
+        int pesoB = b->custo + (rand() % 5);
+        return pesoA > pesoB; // Ordem crescente de prioridade
     }
 };
 
 bool buscaOrdenada(No *noInicial, set<Estado> &visitados, vector<Operacao> &caminho, const Board &board)
 {
-    priority_queue<No*, vector<No*>, Comparador> filaPrioridade;
+    priority_queue<No*, vector<No*>, ComparadorOrdenado> filaPrioridade;
     int profundidade = 0; // Contador de profundidade para diferenciar os custos
 
     filaPrioridade.push(noInicial);
@@ -240,151 +369,316 @@ bool buscaOrdenada(No *noInicial, set<Estado> &visitados, vector<Operacao> &cami
     return false;
 }
 
+
+
+
+
 //////////////////////////////////// FIM BUSCA ORDENADA ///////////////////////////////////////////////
 
+//////////////////////////////////////// BUSCA A* ////////////////////////////////////////////////
+
+     // Listas para armazenar informações sobre nós abertos e fechados
+     struct InfoNo {
+        int linha;
+        int coluna;
+        int custoTotal;
+    
+        InfoNo(No* no) {
+            linha = no->estado.linha;
+            coluna = no->estado.coluna;
+            custoTotal = no->custoReal + no->heuristicaStar;
+        }
+    };
+// Função para imprimir a lista de nós
+void imprimirListaNos(const std::vector<InfoNo>& lista, const std::string& titulo);
+
+struct ComparadorCustoTotal {
+    bool operator()(const No* a, const No* b) const {
+         return a->custo > b->custo; // Ordena pelo menor custo total
+     }
+ };
+ 
 
 
-//////////////////////////////////// BUSCA BACKTRACKING //////////////////////////////////////////////
-bool buscaBacktracking(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
-    if (estadoObjetivo(noAtual->estado))
-        return true;
 
-    visitados.insert(noAtual->estado);
+int custoDoCaminho(const Estado& estadoOrigem, const Estado& estadoDestino, const Board& tabuleiro) {
+    
+    return 1;
+}
 
-    //std::vector<No*> sucessores = gerarSucessores(noAtual, board);
-    std::vector<Operacao> operacoes = listaOperacoes(noAtual, board);
 
-    for (Operacao operacao : operacoes) {
-        No* sucessor = getSucessor(noAtual, operacao, board);
-        if (visitados.find(sucessor->estado) == visitados.end()) {
-            caminho.push_back(operacao);
-            if (buscaBacktracking(sucessor, visitados, caminho, board))
-                return true;
-            caminho.pop_back();
+int heuristicaStar(const Estado& estado, const Board& board) {
+    // Conta quantos objetivos faltam acender
+    int objetivosRestantes = 0;
+    for (bool aceso : estado.lighted) {
+        if (!aceso) {
+            objetivosRestantes++;
         }
     }
-
-    //visitados.erase(noAtual->estado);
-    return false;
-}
-/////////////////////////////////// FIM BUSCA BACKTRACKING ///////////////////////////////////////////
-
-/////////////////////////////////// HEURISTICA BUSCA GULOSA //////////////////////////////////////////
-struct ComparadorHeuristica {
-    bool operator()(const No* a, const No* b) const {
-        return a->heuristica > b->heuristica; // Força a escolher a menor heurística primeiro
+    
+    // Se não há mais objetivos para acender, retorna 0
+    if (objetivosRestantes == 0) {
+        return 0;
     }
-};
-
-int heuristica(const Estado& estado, const Board& board) {
+    
+    // Para cada objetivo não aceso, calcula a distância Manhattan
     int menorDistancia = std::numeric_limits<int>::max();
-
-    for (const auto& objetivo : board.goals)
-    {
-        int distancia = abs(estado.linha - objetivo.first) + abs(estado.coluna - objetivo.second);
-        menorDistancia = std::min(menorDistancia, distancia);
+    
+    for (int i = 0; i < board.goals.size(); i++) {
+        if (!estado.lighted[i]) {
+            int distancia = abs(estado.linha - board.goals[i].first) + 
+                            abs(estado.coluna - board.goals[i].second);
+            
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+            }
+        }
     }
-
+    
+    
     return menorDistancia;
 }
-///////////////////////////////// FIM HEURISTICA BUSCA GULOSA ////////////////////////////////////////
 
-//////////////////////////////////////// BUSCA GULOSA ////////////////////////////////////////////////
-bool buscaGulosa(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& board) {
-    std::priority_queue<No*, std::vector<No*>, ComparadorHeuristica> filaPrioridade;
 
-    noAtual->heuristica = heuristica(noAtual->estado, board);
-    filaPrioridade.push(noAtual);
-    visitados.insert(noAtual->estado);
 
-    while (!filaPrioridade.empty()) {
-        No* noAtual = filaPrioridade.top();
-        filaPrioridade.pop();
+    // nosAbertos e nosFechados
+    std::vector<InfoNo> nosAbertos;
+    std::vector<InfoNo> nosFechados;
 
-        if (estadoObjetivo(noAtual->estado)) {
-            caminho = reconstruirCaminho(noAtual);
-            return true;
-        }
-
-        std::vector<No*> sucessores = gerarSucessores(noAtual, board);
-        for (No* sucessor : sucessores) {
-            if (visitados.find(sucessor->estado) == visitados.end()) {
-                sucessor->heuristica = heuristica(sucessor->estado, board);
-                filaPrioridade.push(sucessor);
-                visitados.insert(sucessor->estado);
+     // Imprime o mapa com o caminho solução
+     
+          void imprimirListaNos(const std::vector<InfoNo>& lista, const std::string& titulo) {
+            std::cout << "\n=== " << titulo << " ===\n";
+            for (const auto& no : lista) {
+                std::cout << "Linha: " << no.linha << ", Coluna: " << no.coluna << ", Custo Total: " << no.custoTotal << '\n';
             }
+            std::cout << "=========================\n";
+              // Imprime as listas de nós abertos e fechados
+        imprimirListaNos(nosFechados, "LISTA DE NÓS FECHADOS");
+        imprimirListaNos(nosAbertos, "LISTA DE NÓS ABERTOS");
+
+        };
+        
+// Comparação otimizada para encontrar o caminho mais curto
+struct ComparadorCustoTotalStar {
+    bool operator()(const No* a, const No* b) const {
+        // quantos objetivos já foram acesos 
+        int acesosA = 0, acesosB = 0;
+        for (bool aceso : a->estado.lighted) {
+            if (aceso) acesosA++;
         }
-    }
-
-    return false; // Caminho não foi encontrado
-}
-/////////////////////////////////////// FIM BUSCA GULOSA /////////////////////////////////////////////
-
-
-
-//////////////////////////////////////// BUSCA A* ////////////////////////////////////////////////
-struct ComparadorCustoTotal {
-   bool operator()(const No* a, const No* b) const {
-        return a->custo > b->custo; // Ordena pelo menor custo total
+        for (bool aceso : b->estado.lighted) {
+            if (aceso) acesosB++;
+        }
+        
+        if (acesosA != acesosB) {
+            return acesosA < acesosB; // Priorizar estados com mais objetivos acesos
+        }
+        
+        // Se iguais em objetivos acesos, compara f(n) = g(n) + h(n)
+        int fA = a->custoReal + a->heuristicaStar;
+        int fB = b->custoReal + b->heuristicaStar;
+        
+        if (fA != fB) {
+            return fA > fB; // Menor custo total tem maior prioridade
+        }
+        
+        // Em caso de empate, priorize o nó com menor g(n)
+     
+        return a->custoReal > b->custoReal;
     }
 };
 
+
 bool buscaAEstrela(No* noAtual, std::set<Estado>& visitados, std::vector<Operacao>& caminho, const Board& tabuleiro) {
-    // Fila de prioridade para A*, ordenada por f(n) = g(n) + h(n)
-    std::priority_queue<No*, std::vector<No*>, ComparadorCustoTotal> filaPrioridade;
+    std::cout << "\n=== INICIANDO BUSCA A* OTIMIZADA PARA LIGHTBOT ===\n";
+    
+    // Fila de prioridade para A*
+    std::priority_queue<No*, std::vector<No*>, ComparadorCustoTotalStar> filaPrioridade;
+    
+    // Mapa para armazenar o menor custo conhecido para cada estado
+    std::map<Estado, int> custoMinimo;
+    
 
-    // Inicializa o nó atual
-    noAtual->custoReal = 0; // g(n): custo real do caminho percorrido até o nó atual
-    noAtual->heuristica = heuristica(noAtual->estado, tabuleiro); // h(n): estimativa do custo restante
-    noAtual->custo = noAtual->custoReal + noAtual->heuristica; // f(n) = g(n) + h(n)
+    // Inicializa o nó inicial
+    noAtual->custoReal = 0 ; // Custo inicial é 0
+    noAtual->heuristicaStar = heuristicaStar(noAtual->estado, tabuleiro);
+    //noAtual->custo = noAtual->custoReal + noAtual->heuristicaStar;
+    noAtual->custo = noAtual->custoReal + noAtual->heuristicaStar ; //considerando o custo
+
     filaPrioridade.push(noAtual);
-    visitados.insert(noAtual->estado);
-
+    custoMinimo[noAtual->estado] = noAtual->custoReal;
+    nosAbertos.push_back(InfoNo(noAtual));
+    
+    int nosProcessados = 0;
+    int nosGerados = 1; // Conta o nó inicial
+    
     while (!filaPrioridade.empty()) {
         No* noAtual = filaPrioridade.top();
         filaPrioridade.pop();
-
-        // Verifica se o nó atual é o objetivo
-        if (estadoObjetivo(noAtual->estado)) {
+        
+        // Remove da lista de abertos (para impressão)
+        for (auto it = nosAbertos.begin(); it != nosAbertos.end(); ++it) {
+            if (it->linha == noAtual->estado.linha && 
+                it->coluna == noAtual->estado.coluna && 
+                it->custoTotal == noAtual->custoReal + noAtual->heuristicaStar) {
+                it = nosAbertos.erase(it);
+                break;
+            }
+        }
+        
+        nosProcessados++;
+        
+        // Verifica se já existe um caminho melhor para este estado
+        auto it = custoMinimo.find(noAtual->estado);
+        if (it != custoMinimo.end() && it->second < noAtual->custoReal) {
+            continue; 
+        }
+        
+        // Verifica se o estado atual já foi visitado com um custo melhor
+        if (visitados.find(noAtual->estado) != visitados.end()) {
+            continue;
+        }
+        
+        // Marca o estado como visitado
+        visitados.insert(noAtual->estado);
+        nosFechados.push_back(InfoNo(noAtual));
+        
+        // Usei pra debug - Imprime informações sobre o nó atual para debug
+        if (nosProcessados % 50 == 0) {
+            std::cout << "Nós processados: " << nosProcessados 
+                      << ", Nós gerados: " << nosGerados 
+                      << ", Lista de abertos: " << nosAbertos.size() << std::endl;
+        }
+        
+        // Verifica se encontrou o objetivo
+        if (estadoObjetivo(noAtual->estado)){ 
             caminho = reconstruirCaminho(noAtual);
+            
+            // Imprime INFORMAÇÕES finais
+            std::cout << "\n======================================================\n";
+            std::cout << "=== INFORMAÇÕES DA BUSCA - SOLUÇÃO ENCONTRADA! ===\n";
+            std::cout << "======================================================\n";
+            std::cout << "Total de nós gerados: " << nosGerados << std::endl;
+            std::cout << "Total de nós processados: " << nosProcessados << std::endl;
+            std::cout << "Total de nós na lista de ABERTOS: " << nosAbertos.size() << std::endl;
+            std::cout << "Total de nós na lista de FECHADOS: " << nosFechados.size() << std::endl;
+            std::cout << "Comprimento do caminho solução: " << caminho.size() << " passos" << std::endl;
+            std::cout << "Custo total da solução: " << noAtual->custoReal << std::endl;
             return true;
         }
 
-        // Gera os sucessores do nó atual
-        std::vector<No*> sucessores = gerarSucessores(noAtual, tabuleiro);
-        for (No* sucessor : sucessores) {
-            // Calcula o custo real do sucessor (g(n))
-            int custoRealSucessor = noAtual->custoReal + 1; // Assume-se que o custo de cada operação é 1
 
-            // Verifica se o sucessor já foi visitado ou se encontrou um caminho melhor
-            if (visitados.find(sucessor->estado) == visitados.end() || custoRealSucessor < sucessor->custoReal) {
-                sucessor->custoReal = custoRealSucessor; // Atualiza g(n)
-                sucessor->heuristica = heuristica(sucessor->estado, tabuleiro); // Calcula h(n)
-                sucessor->custo = sucessor->custoReal + sucessor->heuristica; // f(n) = g(n) + h(n)
+        // Gera os sucessores 
+    std::vector<Operacao> operacoes = listaOperacoes(noAtual, tabuleiro);
+        
+        // Primeiro, verifica se pode acender 
+    bool acendeu = false;
+        for (Operacao op : operacoes) {
+            if (op == LIGHT) {
+                No* sucessor = getSucessor(noAtual, op, tabuleiro);
+                if (sucessor != nullptr) {
+                    nosGerados++;
+                    
+                    
+                    //atribuído valor randomico para escolha do caminho mais curto
+                    //RANDOMICO
+                    // Todos os movimentos têm custo de acordo com a dificuldade da passagem pelo nó (esse aqui é RANDOMICO - atribuído no nó)
+                    int novoCustoReal = noAtual->custoReal + noAtual->dificuldadeNo;
 
-                // Adiciona o sucessor à fila de prioridade
-                filaPrioridade.push(sucessor);
-                visitados.insert(sucessor->estado);
+                    // Verifica se já existe um caminho melhor para este estado
+                    auto it = custoMinimo.find(sucessor->estado);
+                    if (it != custoMinimo.end() && it->second <= novoCustoReal) {
+                        delete sucessor;
+                        continue;
+                    }
+                    
+                    // Atualiza o custo do sucessor
+                    sucessor->custoReal = novoCustoReal;
+                    sucessor->heuristicaStar = heuristicaStar(sucessor->estado, tabuleiro);
+                    sucessor->custo = sucessor->custoReal + sucessor->heuristicaStar;
+                    
+                    // Atualiza o custo mínimo conhecido para este estado
+                    custoMinimo[sucessor->estado] = novoCustoReal;
+                    
+                    // Adiciona à fila de prioridade e lista de abertos
+                    filaPrioridade.push(sucessor);
+                    nosAbertos.push_back(InfoNo(sucessor));
+                    
+                    acendeu = true;
+                    break; 
+                }
+            }
+        }
+        
+        // Se não acendeu, gera os outros sucessores 
+        if (!acendeu) {
+            for (Operacao op : operacoes) {
+                if (op == LIGHT) continue; 
+                
+                No* sucessor = getSucessor(noAtual, op, tabuleiro);
+                if (sucessor != nullptr) {
+                    nosGerados++;
+                    
+                      
+                    //atribuído valor randomico para escolha do caminho mais curto
+                    //RANDOMICO
+                    // Todos os movimentos têm custo de acordo com a dificuldade da passagem pelo nó (esse aqui é RANDOMICO - atribuído no nó)
+                    int novoCustoReal = noAtual->custoReal + noAtual->dificuldadeNo;
+                    
+                    
+                    // Verifica se já existe um caminho melhor para este estado
+                    auto it = custoMinimo.find(sucessor->estado);
+                    if (it != custoMinimo.end() && it->second <= novoCustoReal) {
+                        delete sucessor;
+                        continue;
+                    }
+                    
+                    // Atualiza o custo do sucessor
+                    sucessor->custoReal = novoCustoReal;
+                    sucessor->heuristicaStar = heuristicaStar(sucessor->estado, tabuleiro);
+                    sucessor->custo = sucessor->custoReal + sucessor->heuristicaStar;
+                    
+                    // Atualiza o custo mínimo conhecido para este estado
+                    custoMinimo[sucessor->estado] = novoCustoReal;
+                    
+                    // Adiciona à fila de prioridade e lista de abertos
+                    filaPrioridade.push(sucessor);
+                    nosAbertos.push_back(InfoNo(sucessor));
+                noAtual->sucessores.push_back(sucessor);
+                }
             }
         }
     }
-
-    return false; // Caminho não foi encontrado
+    
+    std::cout << "\n=== BUSCA ENCERRADA SEM ENCONTRAR SOLUÇÃO ===\n";
+    
+    // Imprime INFORMAÇÕES finais mesmo que não tenha encontrado solução
+    std::cout << "\n=== INFORMAÇÕES DA BUSCA ===\n";
+    std::cout << "Total de nós gerados: " << nosGerados << std::endl;
+    std::cout << "Total de nós processados: " << nosProcessados << std::endl;
+    std::cout << "Total de nós na lista de ABERTOS: " << nosAbertos.size() << std::endl;
+    std::cout << "Total de nós na lista de FECHADOS: " << nosFechados.size() << std::endl;
+    
+    // Imprime as listas de nós abertos e fechados
+    //imprimirListaNos(nosAbertos, "LISTA DE NÓS ABERTOS");
+    //imprimirListaNos(nosFechados, "LISTA DE NÓS FECHADOS");
+    
+    return false;
 }
 
-/////////////////////////////////////// FINAL DA BUSCA A* /////////////////////////////////////////////
-
-
-
-
-int main()
-{
+ /////////////////////////////////////// FINAL DA BUSCA A* /////////////////////////////////////////////
+ 
+int main() {
+    
+    srand(time(0)); // Inicializa a semente do gerador aleatório - A*
 
     Board *board = new Board();
 
     /////////////// MENU INICIAL ////////////////////////
     cout << "Selecione o mapa: 1, 2 ou 3" << endl;
     int level;
+ 
     cin >> level;
     switch (level)
     {
@@ -399,11 +693,10 @@ int main()
         break;
     default:
         cout << "Mapa invalido" << endl;
-        cout << "Mapa invalido" << endl;
         return 0;
     }
     //////////////////////////////////////////////////////
-    cout << "Mapa selecionado: " << level << endl;
+    cout << "Mapa selecionado: " << level << std::endl;
     cout << "Mapa: " << endl;
     for (int i = 0; i < board->n_lines; i++)
     {
@@ -440,7 +733,6 @@ int main()
 
     Estado estadoInicial = Estado(0, 0, vector<bool>(board->goals.size(), false));
     No *noAtual = new No(estadoInicial, nullptr, UP, 0);
-
     std::set<Estado> visitados;
     std::vector<Operacao> caminho;
     bool found = false;
@@ -460,9 +752,11 @@ int main()
             found = buscaGulosa(noAtual, visitados, caminho, *board);
             break;
         case 5:
+            
             found = buscaAEstrela(noAtual, visitados, caminho, *board);
             break;
-        case 6:
+
+        case 6: 
             found = buscaOrdenada(noAtual, visitados, caminho, *board);
             break;
 
@@ -488,10 +782,12 @@ int main()
             }
         }
         imprimirMapaComCaminho(board->n_lines, board->n_columns, mapaChar, caminho, 0, 0);
+        gerarArquivoDOT(noAtual, "arvore_busca.dot", caminho);
+        system("dot -Tpng arvore_busca.dot -o arvore_busca.png");
+        std::cout << "Árvore de busca gerada: arvore_busca.png" << std::endl;
     }
     else
     {
-        cout << "Caminho nao encontrado" << endl;
         cout << "Caminho nao encontrado" << endl;
     }
 
@@ -501,3 +797,4 @@ int main()
 
     return 0;
 }
+

@@ -12,10 +12,12 @@ typedef struct BoardCell
 {
     int height;
     bool isGoal;
+    //int dificuldadeNo;
 
     BoardCell(){
         this->height = 0;
         this->isGoal = false;
+       //this->dificuldadeNo = 1;
     }
     BoardCell(int h, bool g): height(h), isGoal(g) {}
     ~BoardCell(){}
@@ -33,9 +35,10 @@ typedef struct Board{
     int getGoalIndex(int line, int column) const;
     int getAltura(int line, int column) const;
     bool posValida(int linhaOrigem, int colunaOrigem, int linhaDestino, int colunaDestino) const;
+    int getCustoMedio(const Board& tabuleiro) const;
+    
 
 }Board;
 
 
 #endif // BOARD_HPP
-    
