@@ -16,6 +16,7 @@ typedef struct No
     int custo;
     int heuristica;
     int custoReal;  //// salva o custo real do caminho percorrido até o nó atual (A*)
+    std::vector<No*> sucessores;  //// salva os sucessores do nó atual
     //int custoAleatorio; // Novo campo (valor aleatório entre 0-5) (A*)
     int heuristicaStar; //  (A*)
     int dificuldadeNo  = rand() % 4;
